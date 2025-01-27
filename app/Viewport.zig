@@ -19,6 +19,8 @@ max_rows: u16 = 1, // max rows
 start_row: u16 = 1, // 1 based index
 termios_bak: posix.termios,
 
+initial_position: terminal.Position = .{ .col = 1, .row = 1 },
+
 const Self = @This();
 
 pub fn init() !Self {
@@ -38,10 +40,11 @@ pub fn deinit(self: *Self) void {
 
 pub fn initBounds(self: *Self) !void {
     self.size = terminal.getTerminalSize();
+    self.initial_position = try terminal.getCursorPosition();
     self.start_row = try Self.adjustAndGetInitialStartRow(
         self.size,
-        try terminal.getCursorPosition(),
-    );
+        self.initial_position,
+    ) + 1;
     self.updateMaxRows();
 }
 
@@ -81,15 +84,15 @@ pub fn updateBounds(self: *Self) !bool {
 }
 
 fn updateStartRow(self: *Self, rows: u16, prev_rows: u16) !void {
-    if (self.start_row == 1) return;
+    if (self.start_row == 2) return;
 
     const prev_start_row = self.start_row;
     const possible_max_rows = rows -| self.start_row -| 2;
 
     // Size decreased and cursor needs to increase
     if (prev_rows >= rows and possible_max_rows < self.max_rows) {
-        self.start_row = 1;
-        try Self.setCursor(1, 1);
+        self.start_row = 2;
+        try Self.setCursor(2, 1);
     }
 
     // Size increased, start row shifted up
@@ -111,7 +114,7 @@ fn handleClear(self: *Self) !bool {
         return false;
     }
 
-    self.start_row = position.row;
+    self.start_row = position.row + 1;
     self.updateMaxRows();
     return true;
 }

@@ -22,7 +22,9 @@ const statfmt = @import("../fs/statfmt.zig");
 const App = @import("./App.zig");
 const Stat = @import("../fs/Stat.zig");
 const View = @import("./View.zig");
+const Viewport = @import("./Viewport.zig");
 const Manager = @import("../fs/Manager.zig");
+const Item = @import("../fs/Item.zig");
 
 const Entry = Manager.Iterator.Entry;
 const SearchQuery = string.SearchQuery;
@@ -111,12 +113,13 @@ pub fn printLines(
     self: *Self,
     view: *View,
     draw: *Draw,
-    start_row: usize,
+    viewport: *Viewport,
     search_query: ?*const SearchQuery,
     is_capturing_command: bool,
+    root_path: []const u8,
 ) !void {
     self.resetIndentList();
-    try draw.moveCursor(start_row, 0);
+    try draw.moveCursor(viewport.start_row, 0);
 
     var gum: GidUidMax = .{ .gid_max = 0, .uid_max = 0 };
     if (self.info.show and (self.info.group or self.info.user)) {
@@ -144,9 +147,27 @@ pub fn printLines(
             try self.printLine(i, view, draw, search_query, &gum);
         }
 
+        // Display current path in prompt
+        if (i == view.cursor) {
+            try draw.moveCursor(viewport.start_row - 1, viewport.initial_position.col);
+            try draw.clearLine();
+            var relative_path = try std.fs.path.relative(
+                entry.item.allocator,
+                root_path,
+                entry.item.abspath(),
+            );
+            if (relative_path.len == 0) {
+                relative_path = try entry.item.allocator.dupe(u8, ".");
+            }
+            try draw.print(relative_path, .{
+                // .bold = true,
+                .fg = .green,
+            });
+        }
+
         // Move cursor to line and render it.
-        else if (i == view.cursor or i == view.prev_cursor or render_last) {
-            const row = start_row + (i - view.first);
+        if (i == view.cursor or i == view.prev_cursor or render_last) {
+            const row = viewport.start_row + (i - view.first);
             try draw.moveCursor(row, 0);
             try self.printLine(i, view, draw, null, &gum);
         }

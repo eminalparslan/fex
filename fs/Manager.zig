@@ -16,11 +16,13 @@ const print = std.debug.print;
 const Self = @This();
 
 root: *Item,
+original_root: []const u8,
 allocator: mem.Allocator,
 
 pub fn init(allocator: mem.Allocator, root: []const u8) !Self {
     return .{
         .root = try Item.init(allocator, root),
+        .original_root = root,
         .allocator = allocator,
     };
 }

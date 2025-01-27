@@ -11,6 +11,7 @@ const View = @import("./View.zig");
 const Capture = @import("./Capture.zig");
 const Viewport = @import("./Viewport.zig");
 const TreeView = @import("./TreeView.zig");
+const Item = @import("../fs/Item.zig");
 
 const Config = App.Config;
 const SearchQuery = string.SearchQuery;
@@ -67,10 +68,11 @@ pub fn deinit(self: *Self) void {
 
 pub fn printContents(
     self: *Self,
-    start_row: u16,
+    viewport: *Viewport,
     view: *View,
     search_query: ?*const SearchQuery,
     is_capturing_command: bool,
+    root_path: []const u8,
 ) !void {
     self.writer.buffered();
     defer {
@@ -78,17 +80,18 @@ pub fn printContents(
         self.writer.unbuffered();
     }
 
-    try self.draw.moveCursor(start_row, 0);
+    try self.draw.moveCursor(viewport.start_row, 0);
     try self.treeview.printLines(
         view,
         self.draw,
-        start_row,
+        viewport,
         search_query,
         is_capturing_command,
+        root_path,
     );
 
     const rendered_rows: u16 = @intCast(view.last - view.first);
-    try self.draw.clearLinesBelow(start_row + rendered_rows + 1);
+    try self.draw.clearLinesBelow(viewport.start_row + rendered_rows + 1);
 }
 
 pub fn printCaptureString(self: *Self, view: *View, viewport: *Viewport, capture: *Capture) !void {

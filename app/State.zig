@@ -143,6 +143,8 @@ pub fn postRun(self: *Self) !void {
     if (self.stdout.items.len > 0) {
         try self.dumpStdout();
     }
+
+    try self.output.draw.clearLinesBelow(self.viewport.start_row - 1);
 }
 
 pub fn updateViewport(self: *Self) !void {
@@ -201,10 +203,11 @@ pub fn printContents(self: *Self) !void {
     }
 
     try self.output.printContents(
-        self.viewport.start_row,
+        self.viewport,
         self.view,
         search_query,
         self.input.command.is_capturing,
+        self.manager.original_root,
     );
 
     if (self.input.search.is_capturing) {
@@ -270,6 +273,11 @@ pub fn executeAction(self: *Self, action: AppAction) !void {
         .sort_name_desc => actions.sort(self, .name, false),
         .sort_size_desc => actions.sort(self, .size, false),
         .sort_time_desc => actions.sortTime(self, false),
+
+        .append_absolute => try actions.insertPath(self, .append_absolute),
+        .prepend_absolute => try actions.insertPath(self, .prepend_absolute),
+        .append_relative => try actions.insertPath(self, .append_relative),
+        .prepend_relative => try actions.insertPath(self, .prepend_relative),
 
         .search => actions.search(self),
         .update_search => try actions.execSearch(self),

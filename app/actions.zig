@@ -8,6 +8,13 @@ const State = @import("./State.zig");
 const Item = @import("../fs/Item.zig");
 const SortType = @import("../fs/sort.zig").SortType;
 
+pub const InsertPathType = enum {
+    append_absolute,
+    prepend_absolute,
+    append_relative,
+    prepend_relative,
+};
+
 const ascii = std.ascii;
 const log = std.log.scoped(.actions);
 
@@ -253,6 +260,34 @@ pub fn changeDir(state: *State) !void {
 
     try state.stdout.appendSlice("cd\n");
     try state.stdout.appendSlice(item.abspath());
+    try state.stdout.appendSlice("\n");
+}
+
+pub fn insertPath(state: *State, how: InsertPathType) !void {
+    const item = state.getItemUnderCursor();
+    switch (how) {
+        .append_absolute => try state.stdout.appendSlice("A"),
+        .prepend_absolute => try state.stdout.appendSlice("I"),
+        .append_relative => try state.stdout.appendSlice("a"),
+        .prepend_relative => try state.stdout.appendSlice("i"),
+    }
+
+    try state.stdout.appendSlice("\n");
+
+    if (how == .append_absolute or how == .prepend_absolute) {
+        try state.stdout.appendSlice(item.abspath());
+    } else {
+        var relative_path = try std.fs.path.relative(
+            item.allocator,
+            state.manager.original_root,
+            item.abspath(),
+        );
+        if (relative_path.len == 0) {
+            relative_path = try item.allocator.dupe(u8, ".");
+        }
+        try state.stdout.appendSlice(relative_path);
+    }
+
     try state.stdout.appendSlice("\n");
 }
 

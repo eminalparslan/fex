@@ -65,6 +65,11 @@ pub const AppAction = enum {
     sort_size_desc,
     sort_time_desc,
 
+    append_absolute,
+    prepend_absolute,
+    append_relative,
+    prepend_relative,
+
     select,
 
     search,
@@ -122,8 +127,8 @@ const capture_list = [_]ActionSequence{
     .{ .seq = "9", .action = .depth_nine },
 
     // Display toggles
-    .{ .seq = "I", .action = .toggle_info },
-    .{ .seq = "ti", .action = .toggle_icons },
+    .{ .seq = "ti", .action = .toggle_info },
+    .{ .seq = "tI", .action = .toggle_icons },
     .{ .seq = "ts", .action = .toggle_size },
     .{ .seq = "tp", .action = .toggle_perm },
     .{ .seq = "tt", .action = .toggle_time },
@@ -142,6 +147,11 @@ const capture_list = [_]ActionSequence{
     .{ .seq = "sdn", .action = .sort_name_desc },
     .{ .seq = "sds", .action = .sort_size_desc },
     .{ .seq = "sdt", .action = .sort_time_desc },
+
+    .{ .seq = "A", .action = .append_absolute },
+    .{ .seq = "I", .action = .prepend_absolute },
+    .{ .seq = "a", .action = .append_relative },
+    .{ .seq = "i", .action = .prepend_relative },
 
     // Expansion toggles
     .{ .seq = "E", .action = .expand_all },
